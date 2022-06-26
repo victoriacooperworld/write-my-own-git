@@ -7,12 +7,25 @@ import re  # Regular expressions
 import sys  # Provide access to command-line arguments 
 import zlib  # Git compresses everything using zlib
 
+# Import cmd handler functions from gitv library files
+from libgitv.GitRepository import cmd_init
+
 
 argparser = argparse.ArgumentParser(description="Content tracker")
 argsubparsers = argparser.add_subparsers(title="Commands", dest="command")
 argsubparsers.required = True
 
+# Version command prints the version 
 argsp = argsubparsers.add_parser("version", help="Prints the version")
+
+# Init command initializes a new empty repository
+argsp = argsubparsers.add_parser("init", help="Initialize a new, empty repository.")
+argsp.add_argument("path",
+                   metavar="directory",
+                   nargs="?",
+                   default=".",
+                   help="Where to create the repository.")
+
 
 # Placeholder functions
 def cmd_add(args):
@@ -24,8 +37,6 @@ def cmd_checkout(args):
 def cmd_commit(args):
     pass
 def cmd_hash_object(args):
-    pass
-def cmd_init(args):
     pass
 def cmd_log(args):
     pass

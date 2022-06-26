@@ -31,7 +31,7 @@ class GitObject:
         Return a GitObject
         """
 
-        path = repo_file(repo, "object", sha[:2],sha[2:])
+        path = repo.file("object", sha[:2],sha[2:])
         with open(path, 'rb') as f:
             
             #first get the raw data from depressing the file
