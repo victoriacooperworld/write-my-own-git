@@ -1,0 +1,4 @@
+#!/bin/env python3
+
+import libgitv.main as libgitv
+libgitv.main()
