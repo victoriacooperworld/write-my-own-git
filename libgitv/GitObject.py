@@ -4,8 +4,8 @@
 from multiprocessing.sharedctypes import SynchronizedString
 from zipapp import get_interpreter
 import zlib
-
-
+import GitRepository
+import sys
 class GitObject:
     repo = None
 
@@ -63,3 +63,53 @@ class GitObject:
 
         def object_find(repo, name, fmt=None, follow=True):
             return name
+
+
+#cat-file command
+#git cat-file TYPE OBJECT 
+#cat-file is to print out the user content using a certain format
+
+def cmd_cat_file(args):
+    repo = repo.find()
+    cat_file(repo, args.object, format = args.type.encode())
+
+def cat_file(repo, obj, format = None):
+    obj = GitObject.object_read(repo, GitObject.object_find(repo,obj,format=format))
+    sys.stdout.buffer.write(obj.serialize())
+        
+
+#hash-object is basically the opposite of cat-file: 
+#it reads a file, computes its hash as an object
+#either storing it in the repository (if the -w flag is passed) or just printing its hash.
+#git hash-object [-w] [-t Type] FILE 
+
+def cmd_hash_object(args):
+    if args.write:
+        repo = GitRepository(".") #??
+    else: repo = None
+    
+    with open(args.path, "rb") as fd:
+        #printing its hash
+        sha = object_hash(fd,args.type.encode(),repo)
+        print(sha)
+
+def object_hash(fd, format, repo=None):
+    #type commit, tree, tag, blob
+    #default: blob
+    data = fd.read()
+
+    if format == b'commit':
+        obj = GitCommit(repo, data)
+    elif format == b'tree':
+        obj = GitTree(repo, data)
+    elif format == b'tag':
+        obj = GitTag(repo, data)
+    elif format == b'blob':
+        obj = GitBlob(repo, data)
+    else:
+        raise Exception("Unknown type %s!" % format)
+
+    return GitObject.object_write(obj,repo)
+
+    
+    
