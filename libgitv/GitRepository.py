@@ -112,7 +112,7 @@ class GitRepository(object):
         return ret
     
     
-    def find(path=".", required=True):
+    def repo_find(path=".", required=True):
         # Iteratively search for root of git directory
         # Look for .git folder under directories, starting from
         # current directory up to the root folder

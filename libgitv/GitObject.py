@@ -4,7 +4,7 @@
 from multiprocessing.sharedctypes import SynchronizedString
 from zipapp import get_interpreter
 import zlib
-import GitRepository
+from GitRepository import GitRepository
 import sys
 class GitObject:
     repo = None
@@ -70,7 +70,7 @@ class GitObject:
 #cat-file is to print out the user content using a certain format
 
 def cmd_cat_file(args):
-    repo = repo.find()
+    repo = GitRepository.repo_find()
     cat_file(repo, args.object, format = args.type.encode())
 
 def cat_file(repo, obj, format = None):

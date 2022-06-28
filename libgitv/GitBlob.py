@@ -1,4 +1,4 @@
-import GitObject
+from libgitv.GitObject import GitObject
 
 #Blob is the class which stores users' content
 class GitBlob(GitObject):
