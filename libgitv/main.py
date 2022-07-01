@@ -9,6 +9,7 @@ import zlib  # Git compresses everything using zlib
 
 # Import cmd handler functions from gitv library files
 from libgitv.GitRepository import cmd_init
+from libgitv.GitObject import cmd_cat_file, cmd_hash_object
 
 
 argparser = argparse.ArgumentParser(description="Content tracker")
@@ -25,6 +26,15 @@ argsp.add_argument("path",
                    nargs="?",
                    default=".",
                    help="Where to create the repository.")
+
+argsp = argsubparsers.add_parser("cat-file", help = "Provide content of repository objects")
+argsp.add_argument("type",
+                   metavar="type",
+                   choices=["blob", "commit", "tag", "tree"],
+                   help="Specify the type.")
+argsp.add_argument("object",
+                   metavar = "object",
+                   help = "The object to display.")
 
 
 # Placeholder functions
