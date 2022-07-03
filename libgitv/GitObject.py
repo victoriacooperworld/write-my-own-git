@@ -2,10 +2,12 @@
 #To initialize a GitObject, it needs the repo info and also other data
 #Two important functions - serializ() and deserialize()
 from multiprocessing.sharedctypes import SynchronizedString
+from unittest import result
 from zipapp import get_interpreter
 import zlib
 from GitRepository import GitRepository
 import sys
+import hashlib  # SHA-1 function used extensively by Git
 
 # Forward declaration of constructor dictionaries for superclass to use
 # to filled after the superclass declaration
@@ -16,13 +18,15 @@ class GitObject:
 
     def __init__(self, repo, data = None) -> None:
         self.repo = repo
-        self.data = data
+        if data != None:
+            self.deserialize(data)
 
     def serialize(self):
         """
         This function will be implemented by subclasses.
         """
-        raise Exception("Unimplemented!")
+        # raise Exception("Unimplemented!")
+        pass
 
     def deserialize(self):
         raise Exception("Unimplemented!")
@@ -68,8 +72,20 @@ class GitObject:
             
             return c(repo,raw[sizeIdx+1:]) #return the content
 
-        def object_find(repo, name, fmt=None, follow=True):
-            return name
+        
+    def object_write(obj, written = True):
+        data = obj.serialize()  
+        res = obj.format + b' ' + str(len(data)).encode()+b'\x00'+data
+        sha = hashlib.sha1(result).hexdigest()
+        if written:
+            #compute the path
+            path=repo_file(obj.repo, "objects", sha[0:2], sha[2:], mkdir=written)
+            with open(path) as f:
+                f.write(zlib.compress(result))
+        return sha
+
+    def object_find(repo, name, fmt=None, follow=True):
+        return name
 
 # Import subclasses
 from libgitv.GitBlob import GitBlob
