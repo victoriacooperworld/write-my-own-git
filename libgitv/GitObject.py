@@ -6,6 +6,11 @@ from zipapp import get_interpreter
 import zlib
 from GitRepository import GitRepository
 import sys
+
+# Forward declaration of constructor dictionaries for superclass to use
+# to filled after the superclass declaration
+GIT_OBJECT_CONSTRUCTORS = {}
+
 class GitObject:
     repo = None
 
@@ -48,14 +53,16 @@ class GitObject:
                 raise Exception("Malformed object {0}: bad length".format(sha))
             
             #pick constructor
-            if fmt==b'commit':
+            '''if fmt==b'commit':
                 c=GitCommit
             elif fmt == b'tree':
                 c=GitTree
             elif fmt == b'tag':
                 c=GitTag
             elif fmt == b'blob':
-                c=GitBlob
+                c=GitBlob'''
+            if fmt in GIT_OBJECT_CONSTRUCTORS:
+                c=GIT_OBJECT_CONSTRUCTORS[fmt]
             else:
                 raise Exception("Unknow type {0} for object {1}".format(fmt.decode("ascii"),sha))
             
@@ -63,6 +70,16 @@ class GitObject:
 
         def object_find(repo, name, fmt=None, follow=True):
             return name
+
+# Import subclasses
+from libgitv.GitBlob import GitBlob
+from libgitv.GitCommit import GitCommit
+
+# Load subclass constructors into dictionary
+GIT_OBJECT_CONSTRUCTORS[b'commit'] = GitCommit
+# GIT_OBJECT_CONSTRUCTORS[b'tree'] = GitTree  # Uncomment when class implemented
+# GIT_OBJECT_CONSTRUCTORS[b'tag'] = GitTag  # Uncomment when class implemented
+GIT_OBJECT_CONSTRUCTORS[b'blob'] = GitBlob
 
 
 #cat-file command
