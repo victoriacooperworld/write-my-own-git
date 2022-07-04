@@ -6,7 +6,7 @@ import os  # Provide filesystem abstraction routines
 import re  # Regular expressions
 import sys  # Provide access to command-line arguments 
 import zlib  # Git compresses everything using zlib
-
+import libgitv
 # Import cmd handler functions from gitv library files
 from libgitv.GitRepository import cmd_init
 from libgitv.GitObject import cmd_cat_file, cmd_hash_object
@@ -36,17 +36,31 @@ argsp.add_argument("object",
                    metavar = "object",
                    help = "The object to display.")
 
+argsp = argsubparsers.add_parser(
+    "hash-object",
+    help="Compute object ID and optionally creates a blob from a file")
+
+argsp.add_argument("-t",
+                   metavar="type",
+                   dest="type",
+                   choices=["blob", "commit", "tag", "tree"],
+                   default="blob",
+                   help="Specify the type")
+
+argsp.add_argument("-w",
+                   dest="write",
+                   action="store_true",
+                   help="Actually write the object into the database")
+
+argsp.add_argument("path",
+                   help="Read object from <file>")
 
 # Placeholder functions
 def cmd_add(args):
     pass
-def cmd_cat_file(args):
-    pass
 def cmd_checkout(args):
     pass
 def cmd_commit(args):
-    pass
-def cmd_hash_object(args):
     pass
 def cmd_log(args):
     pass

@@ -5,7 +5,7 @@ from multiprocessing.sharedctypes import SynchronizedString
 from unittest import result
 from zipapp import get_interpreter
 import zlib
-from GitRepository import GitRepository
+from libgitv.GitRepository import GitRepository
 import sys
 import hashlib  # SHA-1 function used extensively by Git
 
@@ -40,7 +40,7 @@ class GitObject:
         Return a GitObject
         """
 
-        path = repo.file("object", sha[:2],sha[2:])
+        path = repo.file("objects", sha[:2],sha[2:])
         with open(path, 'rb') as f:
             
             #first get the raw data from depressing the file
@@ -75,16 +75,16 @@ class GitObject:
         
     def object_write(obj, written = True):
         data = obj.serialize()  
-        res = obj.format + b' ' + str(len(data)).encode()+b'\x00'+data
+        result = obj.format + b' ' + str(len(data)).encode()+b'\x00'+data
         sha = hashlib.sha1(result).hexdigest()
         if written:
             #compute the path
-            path=repo_file(obj.repo, "objects", sha[0:2], sha[2:], mkdir=written)
+            path=repo.file(obj.repo, "objects", sha[0:2], sha[2:], mkdir=written)
             with open(path) as f:
                 f.write(zlib.compress(result))
         return sha
 
-    def object_find(repo, name, fmt=None, follow=True):
+    def object_find(repo, name, format=None, follow=True):
         return name
 
 # Import subclasses

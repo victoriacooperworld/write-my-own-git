@@ -46,6 +46,7 @@ class GitRepository(object):
     
     def file(repo, *path, mkdir=False):
         if repo.dir(*path[:-1], mkdir=mkdir):
+            print(path)
             return repo.path(*path)
     
     
