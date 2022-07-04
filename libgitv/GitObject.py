@@ -79,7 +79,7 @@ class GitObject:
         sha = hashlib.sha1(result).hexdigest()
         if written:
             #compute the path
-            path=repo.file(obj.repo, "objects", sha[0:2], sha[2:], mkdir=written)
+            path=obj.repo.file("objects", sha[0:2], sha[2:], mkdir=written)
             with open(path) as f:
                 f.write(zlib.compress(result))
         return sha
