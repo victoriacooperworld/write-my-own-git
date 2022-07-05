@@ -5,7 +5,7 @@ from libgitv.GitObject import GitObject
 
 def kvlm_parse(raw):
     start = 0
-    dict = None
+    dict = collections.OrderedDict()
     
     while True:
         # Search for the next space and the next newline
@@ -17,7 +17,7 @@ def kvlm_parse(raw):
         # If newline appears first or no space at all, assume a blank line.
         # This indicates that the remainder of the data is the message
         if iSpace < 0 or iNewline < iSpace:
-            assert(iNewline < start)
+            assert(iNewline == start)
             dict[b''] = raw[start+1:]
             return dict
         

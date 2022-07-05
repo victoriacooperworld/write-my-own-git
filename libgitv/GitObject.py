@@ -41,7 +41,7 @@ class GitObject:
         """
 
         path = repo.file("objects", sha[:2],sha[2:])
-        with open(path, 'rb') as f:           
+        with open(path, 'rb') as f:
             #first get the raw data from depressing the file
             raw = zlib.decompress(f.read()) #type(raw) is String
 
@@ -161,7 +161,7 @@ def log_graph(repo,sha,seen):
         #no parent, the initial commit
         return
     
-    parents = commit.kvlm(b'parent') #key value list message
+    parents = commit.kvlm[b'parent'] #key value list message
     if type(parents) != list:
         parents=[parents] #convert it to a list
     
