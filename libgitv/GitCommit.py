@@ -64,7 +64,7 @@ def kvlm_serialize(kvlm):
     
     
 class GitCommit(GitObject):
-    fmt = b'commit'
+    format = b'commit'
     
     def deserialize(self, data):
         self.kvlm = kvlm_parse(data)

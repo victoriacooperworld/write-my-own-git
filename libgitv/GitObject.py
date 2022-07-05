@@ -41,8 +41,7 @@ class GitObject:
         """
 
         path = repo.file("objects", sha[:2],sha[2:])
-        with open(path, 'rb') as f:
-            
+        with open(path, 'rb') as f:           
             #first get the raw data from depressing the file
             raw = zlib.decompress(f.read()) #type(raw) is String
 
@@ -144,5 +143,29 @@ def object_hash(fd, format, repo=None):
 
     return GitObject.object_write(obj,repo)
 
+
+def cmd_log(args):
+    repo = GitRepository.repo_find()
+    print("LOG{")
+    log_graph(repo, GitObject.object_find(repo, args.commit), set())
+    print("}")
+
+def log_graph(repo,sha,seen):
+    if sha in seen:
+        return 
+    seen.add(sha)
+
+    commit = GitObject.object_read(repo,sha)
+    assert(commit.format==b'commit')
+    if not b'parent' in commit.kvlm.keys():
+        #no parent, the initial commit
+        return
     
+    parents = commit.kvlm(b'parent') #key value list message
+    if type(parents) != list:
+        parents=[parents] #convert it to a list
     
+    for p in parents:
+        p = p.decode("ascii")
+        print("c_{0} -> c_{1};".format(sha,p))
+        log_graph(repo,p,seen) #recursion

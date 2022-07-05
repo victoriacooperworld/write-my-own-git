@@ -9,8 +9,7 @@ import zlib  # Git compresses everything using zlib
 import libgitv
 # Import cmd handler functions from gitv library files
 from libgitv.GitRepository import cmd_init
-from libgitv.GitObject import cmd_cat_file, cmd_hash_object
-
+from libgitv.GitObject import cmd_cat_file, cmd_hash_object, cmd_log
 
 argparser = argparse.ArgumentParser(description="Content tracker")
 argsubparsers = argparser.add_subparsers(title="Commands", dest="command")
@@ -55,6 +54,11 @@ argsp.add_argument("-w",
 argsp.add_argument("path",
                    help="Read object from <file>")
 
+
+argsp = argsubparsers.add_parser("log", help = "Display history of the given commit.")
+argsp.add_argument("commit", default= "HEAD", nargs="?", help = "Commit to start at.")
+
+
 # Placeholder functions
 def cmd_add(args):
     pass
@@ -62,8 +66,7 @@ def cmd_checkout(args):
     pass
 def cmd_commit(args):
     pass
-def cmd_log(args):
-    pass
+
 def cmd_ls_tree(args):
     pass
 def cmd_merge(args):
