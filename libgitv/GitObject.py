@@ -56,14 +56,6 @@ class GitObject:
                 raise Exception("Malformed object {0}: bad length".format(sha))
             
             #pick constructor
-            '''if fmt==b'commit':
-                c=GitCommit
-            elif fmt == b'tree':
-                c=GitTree
-            elif fmt == b'tag':
-                c=GitTag
-            elif fmt == b'blob':
-                c=GitBlob'''
             if fmt in GIT_OBJECT_CONSTRUCTORS:
                 c=GIT_OBJECT_CONSTRUCTORS[fmt]
             else:
@@ -88,11 +80,12 @@ class GitObject:
 
 # Import subclasses
 from libgitv.GitBlob import GitBlob
+from libgitv.GitTree import GitTree
 from libgitv.GitCommit import GitCommit
 
 # Load subclass constructors into dictionary
 GIT_OBJECT_CONSTRUCTORS[b'commit'] = GitCommit
-# GIT_OBJECT_CONSTRUCTORS[b'tree'] = GitTree  # Uncomment when class implemented
+GIT_OBJECT_CONSTRUCTORS[b'tree'] = GitTree
 # GIT_OBJECT_CONSTRUCTORS[b'tag'] = GitTag  # Uncomment when class implemented
 GIT_OBJECT_CONSTRUCTORS[b'blob'] = GitBlob
 
@@ -130,14 +123,8 @@ def object_hash(fd, format, repo=None):
     #default: blob
     data = fd.read()
 
-    if format == b'commit':
-        obj = GitCommit(repo, data)
-    elif format == b'tree':
-        obj = GitTree(repo, data)
-    elif format == b'tag':
-        obj = GitTag(repo, data)
-    elif format == b'blob':
-        obj = GitBlob(repo, data)
+    if format in GIT_OBJECT_CONSTRUCTORS:
+        obj = GIT_OBJECT_CONSTRUCTORS[format](repo, data)
     else:
         raise Exception("Unknown type %s!" % format)
 
