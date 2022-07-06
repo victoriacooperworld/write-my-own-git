@@ -1,4 +1,5 @@
 import os  # Provide filesystem abstraction routines
+from queue import SimpleQueue  # Queue data structrue
 
 from libgitv.GitRepository import GitRepository
 from libgitv.GitObject import GitObject
@@ -7,9 +8,7 @@ from libgitv.GitObject import GitObject
 # Tree Leaf - A singular record
 class GitTreeLeaf(object):
     def __init__(self, mode, path, sha):
-        self.mode = mode
-        self.path = path
-        self.sha = sha
+        self.mode, self.path, self.sha = mode, path, sha
 
 
 # Tree - Describes content of work tree, associating blobs to paths.
@@ -58,16 +57,21 @@ class GitTree(GitObject):
     
     
     def checkout(repo, tree, path):
-        for item in tree.items:
-            obj = GitObject.object_read(repo, item.sha)
-            dest = os.path.join(path, item.path)
+        toVisit = SimpleQueue()
+        toVisit.put((tree, path))  # Insert root node in list of nodes to visit
+        
+        while not toVisit.empty():
+            tree, path = toVisit.get()
+            for item in tree.items:
+                obj = GitObject.object_read(repo, item.sha)
+                dest = os.path.join(path, item.path)
 
-            if obj.format == b'tree':
-                os.mkdir(dest)
-                GitTree.checkout(repo, obj, dest)  # Recurse into subtrees
-            elif obj.format == b'blob':
-                with open(dest, 'wb') as f:
-                    f.write(obj.blobdata)  # Write blob objects of tree
+                if obj.format == b'tree':
+                    os.makedirs(dest, exist_ok=True)
+                    toVisit.put((obj, dest))  # Add subtree to list of nodes to visit
+                elif obj.format == b'blob':
+                    with open(dest, 'wb') as f:
+                        f.write(obj.blobdata)  # Write blob objects of tree
         
 
 def cmd_ls_tree(args):
@@ -77,8 +81,7 @@ def cmd_ls_tree(args):
     for item in obj.items:
         print("{0} {1} {2}\t{3}".format(
             "0" * (6 - len(item.mode)) + item.mode.decode("ascii"),
-            # Git's ls-tree displays the type
-            # of the object pointed to.  We can do that too :)
+            # Git's ls-tree displays the type of the object pointed to.  We can do that too :)
             GitObject.object_read(repo, item.sha).format.decode("ascii"),
             item.sha,
             item.path.decode("ascii")))
@@ -92,13 +95,10 @@ def cmd_checkout(args):
     if obj.format == b'commit':
         obj = GitObject.object_read(repo, obj.kvlm[b'tree'].decode("ascii"))
 
-    # Verify that path is an empty directory
-    if os.path.exists(args.path):
-        if not os.path.isdir(args.path):
-            raise Exception("Not a directory {0}!".format(args.path))
-        if os.listdir(args.path):
-            raise Exception("Not empty {0}!".format(args.path))
+    # Verify that path is a directory
+    if os.path.exists(args.path) and not os.path.isdir(args.path):
+        raise Exception("Not a directory {0}!".format(args.path))
     else:
-        os.makedirs(args.path)
+        os.makedirs(args.path, exist_ok=True)
 
     GitTree.checkout(repo, obj, os.path.realpath(args.path).encode())
