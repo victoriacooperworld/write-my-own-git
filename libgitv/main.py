@@ -11,6 +11,7 @@ import libgitv
 from libgitv.GitRepository import cmd_init
 from libgitv.GitObject import cmd_cat_file, cmd_hash_object, cmd_log
 from libgitv.GitTree import cmd_ls_tree, cmd_checkout
+from libgitv.GitRefs import cmd_show_ref
 
 argparser = argparse.ArgumentParser(description="Content tracker")
 argsubparsers = argparser.add_subparsers(title="Commands", dest="command")
@@ -77,6 +78,17 @@ argsp.add_argument("commit",  help="The commit or tree to checkout.")
 argsp.add_argument("path", help="The EMPTY directory to checkout on.")
 
 
+# show-ref lists references
+argsp = argsubparsers.add_parser("show-ref", help="List references.")
+
+
+# tag creates a new tag or lists existing tags
+argsp = argsubparsers.add_parser("tag", help="List and create tags")
+argsp.add_argument("-a", action="store_true", dest="create_tag_object", help="Whether to create a tag object")
+argsp.add_argument("name", nargs="?", help="The new tag's name")
+argsp.add_argument("object", default="HEAD", nargs="?", help="The object the new tag will point to")
+
+
 # Placeholder functions
 def cmd_add(args):
     pass
@@ -89,10 +101,6 @@ def cmd_rebase(args):
 def cmd_rev_parse(args):
     pass
 def cmd_rm(args):
-    pass
-def cmd_show_ref(args):
-    pass
-def cmd_tag(args):
     pass
 
 def cmd_version(args):
