@@ -9,7 +9,7 @@ import zlib  # Git compresses everything using zlib
 import libgitv
 # Import cmd handler functions from gitv library files
 from libgitv.GitRepository import cmd_init
-from libgitv.GitObject import cmd_cat_file, cmd_hash_object, cmd_log
+from libgitv.GitObject import cmd_cat_file, cmd_hash_object, cmd_log, cmd_rev_parse
 from libgitv.GitTree import cmd_ls_tree, cmd_checkout
 from libgitv.GitRefs import cmd_show_ref, cmd_tag
 
@@ -90,6 +90,18 @@ argsp.add_argument("object", default="HEAD", nargs="?", help="The object the new
 # TODO: Add optional argument for message. Variable will be called msg
 
 
+argsp = argsubparsers.add_parser("rev-parse", help="Parse revision (or other objects) identifiers")
+
+argsp.add_argument("--gitv-type",
+    metavar="type",
+    dest="type",
+    choices=["blob", "commit", "tag", "tree"],
+    default=None,
+    help="Specify the expected type")
+
+argsp.add_argument("name", help="The name to parse")
+
+
 # Placeholder functions
 def cmd_add(args):
     pass
@@ -98,8 +110,6 @@ def cmd_commit(args):
 def cmd_merge(args):
     pass
 def cmd_rebase(args):
-    pass
-def cmd_rev_parse(args):
     pass
 def cmd_rm(args):
     pass

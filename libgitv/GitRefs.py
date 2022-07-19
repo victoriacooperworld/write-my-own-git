@@ -7,11 +7,15 @@ from libgitv.GitCommit import GitCommit
 
 
 def ref_resolve(repo, ref):
-    with open(repo.file(ref), 'r') as fp:
-        data = fp.read()[:-1]
-    if data.startswith("ref: "):
-        return ref_resolve(repo, data[5:])
-    else:
+    data = None
+    try:
+        with open(repo.file(ref), 'r') as fp:
+            data = fp.read()[:-1]
+        if data.startswith("ref: "):
+            return ref_resolve(repo, data[5:])
+        else:
+            return data
+    except:
         return data
 
 

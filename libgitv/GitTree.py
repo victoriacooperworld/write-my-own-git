@@ -21,7 +21,7 @@ class GitTree(GitObject):
 
     def serialize(self):
         ret = b''
-        for item in obj.items:
+        for item in self.items:
             ret += item.mode + b' ' + item.path + b'\x00'
             sha = int(item.sha, 16)
             ret += sha.to_bytes(20, byteorder="big")
