@@ -65,9 +65,24 @@ def kvlm_serialize(kvlm):
     
 class GitCommit(GitObject):
     format = b'commit'
-    
+
+    def create(repo, args):
+        obj = GitCommit(repo, '')
+        obj.kvlm = collections.OrderedDict()
+        obj.kvlm[b'tree'] = args['tree']
+        obj.kvlm[b'parent'] = args['parent']
+
+        # TODO: Read data from global config
+        obj.kvlm[b'committer'] = b'Victoria Niu <57949035+victoriacooperworld@users.noreply.github.com> 1656980047 -0700'
+        obj.kvlm[b'author'] = b'Victoria Niu <57949035+victoriacooperworld@users.noreply.github.com> 1656980047 -0700'
+
+        obj.kvlm[b''] = args['msg']
+
+        return obj
+
     def deserialize(self, data):
         self.kvlm = kvlm_parse(data)
+        print(self.kvlm)
         
     def serialize(self):
         return kvlm_serialize(self.kvlm)

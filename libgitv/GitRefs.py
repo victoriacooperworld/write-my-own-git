@@ -1,5 +1,6 @@
 import collections
 import os
+from libgitv.GitObject import GitObject
 
 from libgitv.GitRepository import GitRepository
 from libgitv.GitCommit import GitCommit
@@ -63,21 +64,48 @@ class GitRefs():
 class GitTag(GitCommit):
     format = b'tag'
 
+    def create(repo, object_id, msg):
+        object = GitObject.object_read(repo, object_id)
+
+        args = {
+            'tree': object.kvlm[b'tree'],
+            'parent': object_id,
+            'msg': msg,
+        }
+        obj = GitCommit.create(repo, args)
+        return obj
+
 
 def cmd_tag(args):
     repo = GitRepository.repo_find()
 
     if args.name:
-        tag_create(args.name, args.object, type="object" if args.create_tag_object else "ref")
+        # TODO: Need to pass in args.msg optionally into tag_create
+        tag_create(repo, args.name, args.object, type="annotated" if args.create_tag_object else "lightweight")
     else:
         refs = ref_list(repo)
         show_ref(repo, refs["tags"], with_hash=False)
 
 
-def tag_create(name, object, type):
-    if type=="ref":
-        # TODO: Create ref
-    elif type="object":
-        # TODO: Create object tag
+def tag_create(repo, name, object_id, type):
+    if type=="lightweight":
+        # Create lightweight -- plain ref to a commit
+        # Create a file of given name at .git/refs/tags
+        path = repo.file('refs', 'tags', name)
+        with open(path, 'w') as f:
+            # Write commit id into file
+            f.write(object_id)
+        
+    elif type=="annotated":
+        # Create new commit object with message (annotation)
+        # TODO: Pass in args.msg into GitTag.create
+        annotatedTag = GitTag.create(repo, object_id)
+        annotation_id = annotatedTag.object_write()
+        
+        # Create a file of given name at .git/refs/tags
+        path = repo.file('refs', 'tags', name)
+        with open(path, 'w') as f:
+            # Write commit id into file
+            f.write(annotation_id)
     else:
         raise('Unknown tag type')
