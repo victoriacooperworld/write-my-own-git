@@ -67,7 +67,7 @@ class GitCommit(GitObject):
     format = b'commit'
 
     def create(repo, args):
-        obj = GitCommit(repo, '')
+        obj = GitCommit(repo)
         obj.kvlm = collections.OrderedDict()
         obj.kvlm[b'tree'] = args['tree']
         obj.kvlm[b'parent'] = args['parent']

@@ -25,7 +25,7 @@ class GitObject:
 
     def __init__(self, repo, data = None) -> None:
         self.repo = repo
-        if data != None:
+        if data is not None:
             self.deserialize(data)
 
     def serialize(self):
@@ -198,7 +198,7 @@ def object_hash(fd, format, repo=None):
     else:
         raise Exception("Unknown type %s!" % format)
 
-    return GitObject.object_write(obj,repo)
+    return obj.object_write(False)
 
 
 def cmd_log(args):

@@ -8,10 +8,11 @@ import sys  # Provide access to command-line arguments
 import zlib  # Git compresses everything using zlib
 import libgitv
 # Import cmd handler functions from gitv library files
-from libgitv.GitRepository import cmd_init
+from libgitv.GitRepository import GitRepository, cmd_init
 from libgitv.GitObject import cmd_cat_file, cmd_hash_object, cmd_log, cmd_rev_parse
 from libgitv.GitTree import cmd_ls_tree, cmd_checkout
 from libgitv.GitRefs import cmd_show_ref, cmd_tag
+from libgitv.GitIndex import cmd_ls_files 
 
 argparser = argparse.ArgumentParser(description="Content tracker")
 argsubparsers = argparser.add_subparsers(title="Commands", dest="command")
@@ -91,15 +92,17 @@ argsp.add_argument("object", default="HEAD", nargs="?", help="The object the new
 
 
 argsp = argsubparsers.add_parser("rev-parse", help="Parse revision (or other objects) identifiers")
-
 argsp.add_argument("--gitv-type",
     metavar="type",
     dest="type",
     choices=["blob", "commit", "tag", "tree"],
     default=None,
     help="Specify the expected type")
-
 argsp.add_argument("name", help="The name to parse")
+
+
+argsp = argsubparsers.add_parser("ls-files", help="Show information about files in the index and the working tree")
+
 
 
 # Placeholder functions
@@ -127,6 +130,7 @@ commandDict = {
     "init": cmd_init,
     "log": cmd_log,
     "ls-tree": cmd_ls_tree,
+    "ls-files": cmd_ls_files,
     "merge": cmd_merge,
     "rebase": cmd_rebase,
     "rev-parse": cmd_rev_parse,
