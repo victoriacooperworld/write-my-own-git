@@ -78,7 +78,7 @@ class GitObject:
         if written:
             #compute the path
             path=obj.repo.file("objects", sha[0:2], sha[2:], mkdir=written)
-            with open(path) as f:
+            with open(path, 'wb') as f:
                 f.write(zlib.compress(result))
         return sha
 

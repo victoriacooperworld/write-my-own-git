@@ -68,7 +68,7 @@ class GitRefs():
 class GitTag(GitCommit):
     format = b'tag'
 
-    def create(repo, object_id, msg):
+    def create(repo, object_id, msg=''):
         object = GitObject.object_read(repo, object_id)
 
         args = {
@@ -82,16 +82,17 @@ class GitTag(GitCommit):
 
 def cmd_tag(args):
     repo = GitRepository.repo_find()
+    object_id = GitObject.object_find(repo, args.object)
 
     if args.name:
         # TODO: Need to pass in args.msg optionally into tag_create
-        tag_create(repo, args.name, args.object, type="annotated" if args.create_tag_object else "lightweight", msg = args.msg)
+        tag_create(repo, args.name, object_id, type="annotated" if args.create_tag_object else "lightweight", msg = args.msg)
     else:
         refs = ref_list(repo)
         show_ref(repo, refs["tags"], with_hash=False)
 
 
-def tag_create(repo, name, object_id, type, msg):
+def tag_create(repo, name, object_id, type, msg=''):
     if type=="lightweight":
         # Create lightweight -- plain ref to a commit
         # Create a file of given name at .git/refs/tags
