@@ -1,9 +1,6 @@
 #This file is the GitObject class.
 #To initialize a GitObject, it needs the repo info and also other data
-#Two important functions - serializ() and deserialize()
-from multiprocessing.sharedctypes import SynchronizedString
-from unittest import result
-from zipapp import get_interpreter
+#Two important functions - serialize() and deserialize()
 from datetime import datetime
 import zlib
 import os
@@ -180,7 +177,7 @@ def cat_file(repo, obj, format = None):
 
 def cmd_hash_object(args):
     if args.write:
-        repo = GitRepository(".") #??
+        repo = GitRepository.repo_find()
     else: repo = None
     
     with open(args.path, "rb") as fd:
@@ -188,10 +185,12 @@ def cmd_hash_object(args):
         sha = object_hash(fd,args.type.encode(),repo)
         print(sha)
 
-def object_hash(fd, format, repo=None):
+def object_hash(fd, format=b'blob', repo=None, lf_ending=False):
     #type commit, tree, tag, blob
     #default: blob
     data = fd.read()
+    if lf_ending:  # Scrub blobs to linux LF format for cross-platform consistency
+        data = data.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
 
     if format in GIT_OBJECT_CONSTRUCTORS:
         obj = GIT_OBJECT_CONSTRUCTORS[format](repo, data)

@@ -1,18 +1,11 @@
 import argparse  # Parse command line arguments
-import collections  # Provide auxiliary data structures
-import configparser  # Read/Write configuration files in Microsoft INI format
-import hashlib  # SHA-1 function used extensively by Git
-import os  # Provide filesystem abstraction routines
-import re  # Regular expressions
 import sys  # Provide access to command-line arguments 
-import zlib  # Git compresses everything using zlib
-import libgitv
 # Import cmd handler functions from gitv library files
-from libgitv.GitRepository import GitRepository, cmd_init
+from libgitv.GitRepository import cmd_init
 from libgitv.GitObject import cmd_cat_file, cmd_hash_object, cmd_log, cmd_rev_parse
 from libgitv.GitTree import cmd_ls_tree, cmd_checkout
 from libgitv.GitRefs import cmd_show_ref, cmd_tag
-from libgitv.GitIndex import cmd_ls_files, cmd_add 
+from libgitv.GitIndex import cmd_ls_files, cmd_status, cmd_add
 
 argparser = argparse.ArgumentParser(description="Content tracker")
 argsubparsers = argparser.add_subparsers(title="Commands", dest="command")
@@ -89,8 +82,6 @@ argsp.add_argument("-a", action="store_true", dest="create_tag_object", help="Wh
 argsp.add_argument("name", nargs="?", help="The new tag's name")
 argsp.add_argument("object", default="HEAD", nargs="?", help="The object the new tag will point to")
 argsp.add_argument("-m", action="store", dest="msg", default="", help="Follows the message.")
-# argsp.add_argument("msg", default= "", nargs="?", help= "The message for this annotated tag.")
-# TODO: Add optional argument for message. Variable will be called msg
 
 
 argsp = argsubparsers.add_parser("rev-parse", help="Parse revision (or other objects) identifiers")
@@ -108,6 +99,10 @@ argsp = argsubparsers.add_parser("ls-files", help="Show information about files 
 
 argsp = argsubparsers.add_parser("add", help="Add file contents to the index")
 argsp.add_argument("path", help="Path specification of files to add to the index")
+
+
+argsp = argsubparsers.add_parser("status", help="Show the working tree status")
+argsp.add_argument("path", nargs="?", help="Path specification of files to add to the index")
 
 
 
@@ -140,8 +135,8 @@ commandDict = {
     "rev-parse": cmd_rev_parse,
     "rm": cmd_rm,
     "show-ref": cmd_show_ref,
+    "status": cmd_status,
     "tag": cmd_tag,
-    
     "version": cmd_version
 }
 
