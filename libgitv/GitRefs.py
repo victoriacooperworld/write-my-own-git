@@ -68,16 +68,23 @@ class GitRefs():
 class GitTag(GitCommit):
     format = b'tag'
 
-    def create(repo, object_id, msg=''):
+    def create(repo, object_id, name, msg=''):
         object = GitObject.object_read(repo, object_id)
 
-        args = {
-            'tree': object.kvlm[b'tree'],
-            'parent': object_id,
-            'msg': msg,
-        }
-        obj = GitCommit.create(repo, args)
-        return obj
+        tagObject = GitTag(repo)
+        tagObject.kvlm = collections.OrderedDict()
+        tagObject.kvlm[b'object'] = object_id.encode('ascii') if isinstance(object_id, str) else object_id
+        tagObject.kvlm[b'type'] = b'commit'
+        tagObject.kvlm[b'tag'] = name.encode('ascii') if isinstance(name, str) else name
+
+        # TODO: Read data from global config
+        tagObject.kvlm[b'tagger'] = b'Victoria Niu <57949035+victoriacooperworld@users.noreply.github.com> 1656980047 -0700'
+
+        tagObject.kvlm[b''] = msg.encode('ascii') if isinstance(msg, str) else msg
+        tagObject.kvlm[b''] += b'\n'
+
+        tagObject.format = GitTag.format
+        return tagObject
 
 
 def cmd_tag(args):
@@ -104,7 +111,7 @@ def tag_create(repo, name, object_id, type, msg=''):
     elif type=="annotated": #git tag -a v1.0.0 -m "Releasing version v1.0.0"
         # Create new commit object with message (annotation)
         # TODO: Pass in args.msg into GitTag.create
-        annotatedTag = GitTag.create(repo, object_id, msg)
+        annotatedTag = GitTag.create(repo, object_id, name, msg)
         annotation_id = annotatedTag.object_write()
         
         # Create a file of given name at .git/refs/tags
