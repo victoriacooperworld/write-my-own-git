@@ -1,5 +1,8 @@
 import hashlib
 import struct
+from queue import SimpleQueue  # Queue data structrue
+import os
+import posixpath
 from libgitv.GitObject import GitObject
 from libgitv.GitRepository import GitRepository
 
@@ -78,3 +81,26 @@ def cmd_ls_files(args):
     objIndex = GitIndex.read_index(repo)
     for entry in objIndex.entries:
         print(entry.path)
+
+def cmd_add(args):
+    repo = GitRepository.repo_find()
+    repoRoot = os.path.join(repo.gitdir, '..')  # Obtain repo's root path
+    toVisit = SimpleQueue()
+    if os.path.isfile(args.path):
+        toVisit.put(args.path)
+    elif os.path.isdir(args.path):
+        for root, dirs, files in os.walk(args.path, topdown=True):
+            if '.git' in root:
+                continue
+            for tmpF in files:
+                # TODO: Check if git ignore excludes the file
+                path = os.path.join(root, tmpF)
+                path = os.path.relpath(path, repoRoot)
+                path = path.replace(os.sep, posixpath.sep)
+                toVisit.put(path)
+
+    while not toVisit.empty():
+        path = toVisit.get()
+        print(path)
+        # TODO: Detect change. If changed, update index
+    pass

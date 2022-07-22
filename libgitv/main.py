@@ -12,7 +12,7 @@ from libgitv.GitRepository import GitRepository, cmd_init
 from libgitv.GitObject import cmd_cat_file, cmd_hash_object, cmd_log, cmd_rev_parse
 from libgitv.GitTree import cmd_ls_tree, cmd_checkout
 from libgitv.GitRefs import cmd_show_ref, cmd_tag
-from libgitv.GitIndex import cmd_ls_files 
+from libgitv.GitIndex import cmd_ls_files, cmd_add 
 
 argparser = argparse.ArgumentParser(description="Content tracker")
 argsubparsers = argparser.add_subparsers(title="Commands", dest="command")
@@ -106,10 +106,12 @@ argsp.add_argument("name", help="The name to parse")
 argsp = argsubparsers.add_parser("ls-files", help="Show information about files in the index and the working tree")
 
 
+argsp = argsubparsers.add_parser("add", help="Add file contents to the index")
+argsp.add_argument("path", help="Path specification of files to add to the index")
+
+
 
 # Placeholder functions
-def cmd_add(args):
-    pass
 def cmd_commit(args):
     pass
 def cmd_merge(args):
