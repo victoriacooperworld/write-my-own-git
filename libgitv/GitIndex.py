@@ -3,10 +3,12 @@ import struct
 import os
 import posixpath
 import re
+import stat
 
 from libgitv.util.TextDecorator import TextDecorator
 from libgitv.GitObject import GitObject, object_hash
 from libgitv.GitRepository import GitRepository
+import libgitv.util.StringHelpers as StringHelper
 
 
 class GitIndexEntry(object):
@@ -41,12 +43,32 @@ class GitIndexEntry(object):
     def __init__(self, fields):
         self.ctime_s, self.ctime_n, self.mtime_s, self.mtime_n, self.dev, self.ino, self.mode, self.uid, self.gid, self.size, self.sha1, self.flags, self.path = fields
     
+    def create_from_file(repo, path):
+        # ctime_s, ctime_n, mtime_s, mtime_n, dev, ino, mode, uid, gid, size, sha1, flags, path
+        pathStat = os.stat(path)
+        dev = pathStat.st_dev * 0
+        ino = pathStat.st_ino * 0
+        sha1 = object_hash(open(path, 'rb'), repo=repo, bin=True)
+        flags = len(path)
+        if flags >= 0xFFF: flags = 0xFFF
+        fields = (int(pathStat.st_ctime), (pathStat.st_ctime_ns % 1000000000),
+            int(pathStat.st_mtime), (pathStat.st_mtime_ns % 1000000000), dev, ino,
+            pathStat.st_mode, pathStat.st_uid, pathStat.st_gid, pathStat.st_size, sha1, flags, StringHelper.toBytes(path))
+        print(fields)
+        objIndex = GitIndexEntry(fields)
+        return objIndex
+
+    def serialize(entry):
+        buff = struct.pack('!LLLLLLLLLL20sH', entry.ctime_s, entry.ctime_n, entry.mtime_s, entry.mtime_n, entry.dev, entry.ino, entry.mode, entry.uid, entry.gid, entry.size, entry.sha1, entry.flags)
+        buff += entry.path + b'\x00'
+        return buff
 
         
 
 
 class GitIndex(GitObject):
     format = b'DIRC'
+    entries = []
 
     def read_index(repo):
         path = repo.file('index')
@@ -77,6 +99,20 @@ class GitIndex(GitObject):
             objIndex = GitIndex(repo)
             objIndex.entries = entries
             return objIndex
+
+    def write_index(index):
+        path = index.repo.file('index')
+        with open(path, 'wb') as f:
+            # Write header: signature, version, num_entries
+            buff = struct.pack('!4sLL', index.format, 2, len(index.entries))
+            f.write(buff)
+
+            # For each index entry: write index entry
+            for entry in index.entries:
+                buff = struct.pack('!LLLLLLLLLL20sH')
+
+            # Write hash digest of index
+        pass
 
 
     def getIgnoreList(index):
@@ -198,4 +234,7 @@ def cmd_add(args):
     objIndex = GitIndex.read_index(repo)
     modified, added = objIndex.getStatus(args.path)
     
+    for entry in modified:
+        objEntry = GitIndexEntry.create_from_file(repo, entry[0])
+
     # TODO: Update index by removing deleted entries, updating modified entries, and adding new entries

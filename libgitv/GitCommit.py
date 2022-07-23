@@ -1,6 +1,7 @@
 import collections  # Provide auxiliary data structures
 
 from libgitv.GitObject import GitObject
+import libgitv.util.StringHelpers as StringHelper
 
 
 def kvlm_parse(raw):
@@ -69,14 +70,14 @@ class GitCommit(GitObject):
     def create(repo, args):
         obj = GitCommit(repo)
         obj.kvlm = collections.OrderedDict()
-        obj.kvlm[b'tree'] = args['tree'].encode('ascii') if isinstance(args['tree'], str) else args['tree']
-        obj.kvlm[b'parent'] = args['parent'].encode('ascii') if isinstance(args['parent'], str) else args['parent']
+        obj.kvlm[b'tree'] = StringHelper.toBytes(args['tree'])
+        obj.kvlm[b'parent'] = StringHelper.toBytes(args['parent'])
 
         # TODO: Read data from global config
         obj.kvlm[b'author'] = b'Victoria Niu <57949035+victoriacooperworld@users.noreply.github.com> 1656980047 -0700'
         obj.kvlm[b'committer'] = b'Victoria Niu <57949035+victoriacooperworld@users.noreply.github.com> 1656980047 -0700'
 
-        obj.kvlm[b''] = args['msg'].encode('ascii') if isinstance(args['msg'], str) else args['msg']
+        obj.kvlm[b''] = StringHelper.toBytes(args['msg'])
         obj.kvlm[b''] += b'\n'
 
         return obj

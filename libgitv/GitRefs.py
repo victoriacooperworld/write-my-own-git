@@ -4,6 +4,7 @@ from libgitv.GitObject import GitObject
 
 from libgitv.GitRepository import GitRepository
 from libgitv.GitCommit import GitCommit
+import libgitv.util.StringHelpers as StringHelper
 
 
 def ref_resolve(repo, ref):
@@ -73,14 +74,14 @@ class GitTag(GitCommit):
 
         tagObject = GitTag(repo)
         tagObject.kvlm = collections.OrderedDict()
-        tagObject.kvlm[b'object'] = object_id.encode('ascii') if isinstance(object_id, str) else object_id
+        tagObject.kvlm[b'object'] = StringHelper.toBytes(object_id)
         tagObject.kvlm[b'type'] = b'commit'
-        tagObject.kvlm[b'tag'] = name.encode('ascii') if isinstance(name, str) else name
+        tagObject.kvlm[b'tag'] = StringHelper.toBytes(name)
 
         # TODO: Read data from global config
         tagObject.kvlm[b'tagger'] = b'Victoria Niu <57949035+victoriacooperworld@users.noreply.github.com> 1656980047 -0700'
 
-        tagObject.kvlm[b''] = msg.encode('ascii') if isinstance(msg, str) else msg
+        tagObject.kvlm[b''] = StringHelper.toBytes(msg)
         tagObject.kvlm[b''] += b'\n'
 
         tagObject.format = GitTag.format

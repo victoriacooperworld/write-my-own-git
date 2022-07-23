@@ -68,10 +68,11 @@ class GitObject:
             return c(repo,raw[sizeIdx+1:]) #return the content
 
         
-    def object_write(obj, written = True):
+    def object_write(obj, written = True, bin=False):
         data = obj.serialize()  
         result = obj.format + b' ' + str(len(data)).encode()+b'\x00'+data
-        sha = hashlib.sha1(result).hexdigest()
+        sha = hashlib.sha1(result)
+        sha = sha.digest() if bin else sha.hexdigest()
         if written:
             #compute the path
             path=obj.repo.file("objects", sha[0:2], sha[2:], mkdir=written)
@@ -185,7 +186,7 @@ def cmd_hash_object(args):
         sha = object_hash(fd,args.type.encode(),repo)
         print(sha)
 
-def object_hash(fd, format=b'blob', repo=None, lf_ending=False):
+def object_hash(fd, format=b'blob', repo=None, lf_ending=False, bin=False):
     #type commit, tree, tag, blob
     #default: blob
     data = fd.read()
@@ -197,7 +198,7 @@ def object_hash(fd, format=b'blob', repo=None, lf_ending=False):
     else:
         raise Exception("Unknown type %s!" % format)
 
-    return obj.object_write(False)
+    return obj.object_write(False, bin=bin)
 
 
 def cmd_log(args):
