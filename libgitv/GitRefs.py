@@ -122,3 +122,22 @@ def tag_create(repo, name, object_id, type, msg=''):
             f.write(annotation_id)
     else:
         raise('Unknown tag type')
+
+def tag_list(repo, path=None):
+    #git tag -l
+    #get in to ./git/refs/tags and read all the files and show
+    if not path:
+        path = repo.dir("tags")
+    ret = ''
+
+    for f in sorted(os.listdir(path)):
+        tag_file = os.path.join(path, f)
+        with open(tag_file, 'r') as fp:
+            data = fp.read()
+            ret += data+'\n'
+            print(data)
+    
+    return ret
+
+
+        
