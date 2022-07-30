@@ -5,6 +5,8 @@ import posixpath
 import re
 import stat
 
+import collections
+
 from libgitv.util.TextDecorator import TextDecorator
 from libgitv.GitObject import GitObject, object_hash
 from libgitv.GitRepository import GitRepository
@@ -37,11 +39,11 @@ class GitIndexEntry(object):
     """The object's hash as a hex string"""
     flags = None
     """Length of the name if < 0xFFF (yes, three Fs), -1 otherwise"""
-    path = None
+    # path = None
 
 
     def __init__(self, fields):
-        self.ctime_s, self.ctime_n, self.mtime_s, self.mtime_n, self.dev, self.ino, self.mode, self.uid, self.gid, self.size, self.sha1, self.flags, self.path = fields
+        self.ctime_s, self.ctime_n, self.mtime_s, self.mtime_n, self.dev, self.ino, self.mode, self.uid, self.gid, self.size, self.sha1, self.flags = fields
     
     def create_from_file(repo, path):
         # ctime_s, ctime_n, mtime_s, mtime_n, dev, ino, mode, uid, gid, size, sha1, flags, path
@@ -53,14 +55,14 @@ class GitIndexEntry(object):
         if flags >= 0xFFF: flags = 0xFFF
         fields = (int(pathStat.st_ctime), (pathStat.st_ctime_ns % 1000000000),
             int(pathStat.st_mtime), (pathStat.st_mtime_ns % 1000000000), dev, ino,
-            pathStat.st_mode, pathStat.st_uid, pathStat.st_gid, pathStat.st_size, sha1, flags, StringHelper.toBytes(path))
+            pathStat.st_mode, pathStat.st_uid, pathStat.st_gid, pathStat.st_size, sha1, flags)
         print(fields)
         objIndex = GitIndexEntry(fields)
         return objIndex
 
     def serialize(entry):
         buff = struct.pack('!LLLLLLLLLL20sH', entry.ctime_s, entry.ctime_n, entry.mtime_s, entry.mtime_n, entry.dev, entry.ino, entry.mode, entry.uid, entry.gid, entry.size, entry.sha1, entry.flags)
-        buff += entry.path + b'\x00'
+        # buff += entry.path + b'\x00'
         return buff
 
         
@@ -68,8 +70,8 @@ class GitIndexEntry(object):
 
 class GitIndex(GitObject):
     format = b'DIRC'
-    entries = []
-
+    entries = collections.defaultdict(GitIndexEntry)
+    
     def read_index(repo):
         path = repo.file('index')
         with open(path, 'rb') as f:
@@ -81,7 +83,7 @@ class GitIndex(GitObject):
             assert signature == b'DIRC', 'Invalid index signature {}'.format(signature)
             assert version == 2, 'Unknown index version {}'. format(version)
             data = data[12:-20]
-            entries = []
+            entries = collections.defaultdict(GitIndexEntry)
             i = 0
             ctr = 0
             while i + 62 < len(data) and ctr < num_entries:
@@ -89,8 +91,9 @@ class GitIndex(GitObject):
                 path_end = data.find(b'\x00', fields_end)
                 fields = struct.unpack('!LLLLLLLLLL20sH', data[i:fields_end])
                 path = data[fields_end:path_end]
-                entry = GitIndexEntry((*fields, path.decode()))
-                entries.append(entry)
+                entry = GitIndexEntry(fields)
+                # entries.append(entry)
+                entries[str(path)[2:-1]] = entry
                 entry_len = ((62 + len(path) + 8) // 8) * 8
                 i += entry_len
                 ctr += 1
@@ -167,37 +170,28 @@ class GitIndex(GitObject):
     
     
     def getStatus(index, targetPath=None):
-        toVisit = index.getChangedFiles(targetPath)
+        toVisit = index.getChangedFiles(targetPath) #type: list
 
-        liIndex = index.entries
-        szIndex, szVisit = len(liIndex), len(toVisit)
-        i, j = 0, 0
+        liIndex = index.entries #type: dict
+        szIndex, szVisit = len(liIndex.keys()), len(toVisit)
+        j = 0
 
         modified = []
         added = []
 
-        while i < szIndex and j < szVisit:
-            if liIndex[i].path == toVisit[j]:
-                sha1Index = liIndex[i].sha1.hex()
-                sha1Visit = object_hash(open(toVisit[j], 'rb'), repo=index.repo)
-                # Check for modification. Check both native line ending and git LF line ending
+        for path in toVisit:
+            if path in liIndex:
+                sha1Index = liIndex[path].sha1.hex()
+                sha1Visit = object_hash(open(path, 'rb'), repo=index.repo)
                 if (sha1Index != sha1Visit) and (sha1Index != (object_hash(open(toVisit[j], 'rb'), repo=index.repo, lf_ending=True))):
-                    modified.append((liIndex[i].path, 'm'))
-                i += 1
-                j += 1
-                pass
-            elif liIndex[i].path < toVisit[j]:
-                added.append(toVisit[j])
-                j += 1
+                    modified.append((path, 'm'))
             else:
-                modified.append((liIndex[i].path, 'd'))
-                i += 1
-        while i < szIndex:
-            modified.append((liIndex[i].path, 'd'))
-            i += 1
-        while j < szVisit:
-            added.append(toVisit[j])
-            j += 1
+                added.append(path)
+        
+        for path in liIndex.keys():
+            if path not in toVisit:
+                modified.append((path, 'd'))
+            
         return modified, added
 
 
@@ -231,10 +225,30 @@ def cmd_status(args):
 
 def cmd_add(args):
     repo = GitRepository.repo_find()
-    objIndex = GitIndex.read_index(repo)
+    objIndex = GitIndex.read_index(repo) #entries:
     modified, added = objIndex.getStatus(args.path)
-    
-    for entry in modified:
-        objEntry = GitIndexEntry.create_from_file(repo, entry[0])
+    entries = objIndex.entries
 
-    # TODO: Update index by removing deleted entries, updating modified entries, and adding new entries
+    # for path in entries:
+    #     print (path, entries[path].sha1)
+    
+    for i in modified:
+        path = i[0]
+        if i[1] == 'm':
+            sha1 = object_hash(open(path, 'rb'), bin=True)
+            # TODO: Create new Blob object of updated file
+            entries[path].sha1 = sha1
+        elif i[1] == 'd':
+            #delete the index
+            entries.pop(path)
+    for path in added:
+        # TODO: Create new Blob object of new file
+        entries[path] = GitIndexEntry.create_from_file(repo, path)
+
+    # Write updated index into index file 
+    objIndex.write_index()
+
+
+    # for path in entries:
+    #     print (path, entries[path].sha1)
+    
