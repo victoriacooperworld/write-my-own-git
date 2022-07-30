@@ -187,11 +187,11 @@ class GitIndex(GitObject):
                 j += 1
                 pass
             elif liIndex[i].path < toVisit[j]:
-                modified.append((liIndex[i].path, 'd'))
-                i += 1
-            else:
                 added.append(toVisit[j])
                 j += 1
+            else:
+                modified.append((liIndex[i].path, 'd'))
+                i += 1
         while i < szIndex:
             modified.append((liIndex[i].path, 'd'))
             i += 1
