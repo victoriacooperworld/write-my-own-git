@@ -82,7 +82,7 @@ argsp.add_argument("-a", action="store_true", dest="create_tag_object", help="Wh
 argsp.add_argument("name", nargs="?", help="The new tag's name")
 argsp.add_argument("object", default="HEAD", nargs="?", help="The object the new tag will point to")
 argsp.add_argument("-m", action="store", dest="msg", default="", help="Follows the message.")
-argsp.add_argument("-l", action="store", dest="msg", default="", help="Lists all the tags.")
+argsp.add_argument("-l", action="store_true", dest="list", help="Lists all the tags.")
 
 
 argsp = argsubparsers.add_parser("rev-parse", help="Parse revision (or other objects) identifiers")
