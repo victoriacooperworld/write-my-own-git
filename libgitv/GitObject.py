@@ -72,13 +72,14 @@ class GitObject:
         data = obj.serialize()  
         result = obj.format + b' ' + str(len(data)).encode()+b'\x00'+data
         sha = hashlib.sha1(result)
-        sha = sha.digest() if bin else sha.hexdigest()
+        sha_ret = sha.digest() if bin else sha.hexdigest()
+        sha = sha.hexdigest()
         if written:
             #compute the path
             path=obj.repo.file("objects", sha[0:2], sha[2:], mkdir=written)
             with open(path, 'wb') as f:
                 f.write(zlib.compress(result))
-        return sha
+        return sha_ret
 
     def object_resolve(repo, name):
         candidates = list()
