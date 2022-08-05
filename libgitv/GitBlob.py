@@ -7,6 +7,7 @@ class GitBlob(GitObject):
     def create(repo, data):
         objBlob = GitBlob(repo, '')
         objBlob.blobdata = data
+        return objBlob
         
     def serialize(self):
         return self.blobdata

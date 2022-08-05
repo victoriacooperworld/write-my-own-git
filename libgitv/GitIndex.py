@@ -10,6 +10,7 @@ import collections
 from libgitv.util.TextDecorator import TextDecorator
 from libgitv.GitObject import GitObject, object_hash
 from libgitv.GitRepository import GitRepository
+from libgitv.GitBlob import GitBlob
 import libgitv.util.StringHelpers as StringHelper
 
 
@@ -170,11 +171,9 @@ class GitIndex(GitObject):
     
     
     def getStatus(index, targetPath=None):
-        toVisit = index.getChangedFiles(targetPath) #type: list
+        toVisit = index.getChangedFiles(targetPath)  # type: list
 
-        liIndex = index.entries #type: dict
-        szIndex, szVisit = len(liIndex.keys()), len(toVisit)
-        j = 0
+        liIndex = index.entries  # type: dict
 
         modified = []
         added = []
@@ -183,7 +182,12 @@ class GitIndex(GitObject):
             if path in liIndex:
                 sha1Index = liIndex[path].sha1.hex()
                 sha1Visit = object_hash(open(path, 'rb'), repo=index.repo)
-                if (sha1Index != sha1Visit) and (sha1Index != (object_hash(open(toVisit[j], 'rb'), repo=index.repo, lf_ending=True))):
+                linHash = object_hash(open(path, 'rb'), repo=index.repo, lf_ending=True)
+                if (sha1Index != sha1Visit) and (sha1Index != (object_hash(open(path, 'rb'), repo=index.repo, lf_ending=True))):
+                    print(path)
+                    print("'%s'" % sha1Index, end=' vs ')
+                    print("'%s'" % sha1Visit, end=' vs ')
+                    print("'%s'\n" % linHash)
                     modified.append((path, 'm'))
             else:
                 added.append(path)
@@ -228,14 +232,14 @@ def cmd_add(args):
     objIndex = GitIndex.read_index(repo) #entries:
     modified, added = objIndex.getStatus(args.path)
     entries = objIndex.entries
-
-    # for path in entries:
-    #     print (path, entries[path].sha1)
     
     for i in modified:
         path = i[0]
         if i[1] == 'm':
             sha1 = object_hash(open(path, 'rb'), bin=True)
+            objBlob = GitBlob.create(repo, open(path, 'rb').read())
+            sha1_2 = objBlob.object_write(True)
+            print(sha1_2)
             # TODO: Create new Blob object of updated file
             entries[path].sha1 = sha1
         elif i[1] == 'd':
@@ -246,7 +250,7 @@ def cmd_add(args):
         entries[path] = GitIndexEntry.create_from_file(repo, path)
 
     # Write updated index into index file 
-    objIndex.write_index()
+    # objIndex.write_index()
 
 
     # for path in entries:
