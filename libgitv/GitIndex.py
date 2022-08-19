@@ -3,7 +3,7 @@ import struct
 import os
 import posixpath
 import re
-import stat
+from pathlib import Path
 
 import collections
 
@@ -40,7 +40,6 @@ class GitIndexEntry(object):
     """The object's hash as a hex string"""
     flags = None
     """Length of the name if < 0xFFF (yes, three Fs), -1 otherwise"""
-    # path = None
 
 
     def __init__(self, fields):
@@ -63,7 +62,6 @@ class GitIndexEntry(object):
 
     def serialize(entry):
         buff = struct.pack('!LLLLLLLLLL20sH', entry.ctime_s, entry.ctime_n, entry.mtime_s, entry.mtime_n, entry.dev, entry.ino, entry.mode, entry.uid, entry.gid, entry.size, entry.sha1, entry.flags)
-        # buff += entry.path + b'\x00'
         return buff
 
         
@@ -77,7 +75,6 @@ class GitIndex(GitObject):
         path = repo.file('index')
         with open(path, 'rb') as f:
             data = f.read()
-            print(data)
             # Verify hash
             assert hashlib.sha1(data[:-20]).digest() == data[-20:], 'Invalid index checksum'
             # Read headers
@@ -94,34 +91,61 @@ class GitIndex(GitObject):
                 fields = struct.unpack('!LLLLLLLLLL20sH', data[i:fields_end])
                 path = data[fields_end:path_end]
                 entry = GitIndexEntry(fields)
-                # entries.append(entry)
                 entries[str(path)[2:-1]] = entry
                 entry_len = ((62 + len(path) + 8) // 8) * 8
                 i += entry_len
                 ctr += 1
             assert len(entries) == num_entries
+            # data[i:] are for Extensions
 
             objIndex = GitIndex(repo)
             objIndex.entries = entries
             return objIndex
+
+    def write_cache_tree(index):
+        dirs = {}
+        child_dirs = {}
+        for entry_path in index.entries:
+            curr_dir = '/'.join(entry_path.split('/')[:-1])
+            dirs[curr_dir] = 1 + (dirs[curr_dir] if curr_dir in dirs else 0)
+            if curr_dir not in child_dirs:  child_dirs[curr_dir] = set()
+            # Update parent directory counts
+            path_curr_dir = Path(curr_dir)
+            for dir in dirs:
+                if Path(dir) in path_curr_dir.parents:
+                    dirs[dir] += 1
+                if Path(dir) == path_curr_dir.parent:
+                    child_dirs[dir].add(curr_dir)
+        child_dirs[''].remove('')
+
+        buff = b'TREE'
+        for dir in dirs:
+            if dir == '':  dir_path = b'\x00\x00\x00'
+            else: 
+                dir_path = Path(os.path.relpath(dir, index.repo.worktree)).parts[-1]
+            buff += StringHelper.toBytes(dir_path) + b'\x00'
+            buff += StringHelper.toBytes('%d %d\n' % (dirs[dir], len(child_dirs[dir])))
+            # TODO: Print object-id of tree node
+            # print(buff)
+        return buff
 
     def write_index(index):
         path = index.repo.file('index')
         with open(path, 'rb') as f:
             # Write header: signature, version, num_entries
             buff = struct.pack('!4sLL', index.format, 2, len(index.entries))
-            # f.write(buff)
 
             # For each index entry: write index entry
             for entry_path in index.entries:
                 buff += index.entries[entry_path].serialize() + StringHelper.toBytes(entry_path) + b'\x00'
+            
+            buff += index.write_cache_tree()
 
             # Write hash digest of index
             sha1 = hashlib.sha1(buff).digest()
             buff += sha1
-            print(buff)
+            # print(buff)
             # f.write(buff)
-        pass
 
 
     def getIgnoreList(index):
